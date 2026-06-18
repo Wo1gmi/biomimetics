@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, FileText, Building2, Layers } from "lucide-react";
+import { Upload, FileText, Building2, Layers, ArrowRight } from "lucide-react";
 
 const inputTypes = [
   {
@@ -9,37 +9,109 @@ const inputTypes = [
     label: "Text description",
     placeholder:
       "Describe your organization structure, main flows, and pain points...",
-    type: "text",
   },
   {
     icon: Building2,
     label: "CSV org chart",
     placeholder: "Upload a CSV with columns: entity, reports_to, type, layer",
-    type: "file",
   },
   {
     icon: Layers,
     label: "Notion export",
     placeholder: "Paste Notion page URL or export content",
-    type: "text",
   },
 ];
 
 const exampleInputs = [
   "We have 4 engineering squads that report to a VP of Engineering, but all decisions go through a single architect. The data team is isolated, creating bottlenecks when product needs analytics.",
-  "Our sales and product teams have conflicting KPIs — sales pushes volume, product optimizes retention. The feedback loop is broken: customers churn, sales ignores it.",
+  "Our sales and product teams have conflicting KPIs — sales pushes volume, product optimizes retention. The feedback loop is broken: customers churn but the signal never reaches product.",
   "We run 6 microservices but they share a single database. The data service is a hub with 14 inbound connections and 3 outbound. Any change cascades unpredictably.",
 ];
+
+interface AnalysisResult {
+  vector: { F: number; C: number; A: number; R: number };
+  match: string;
+  matchDetail: string;
+  score: number;
+  recommendation: string;
+  caseId: "saas" | "hr" | "product";
+}
+
+function analyzeInput(text: string): AnalysisResult {
+  const t = text.toLowerCase();
+
+  const hasHierarchy = /\b(hierarchy|hierarchi|bottleneck|architect|vp\b|cto|approval|centrali|single point|all decisions|monolith)\b/.test(t);
+  const hasSilos = /\b(silo|isolated|hr\b|talent|payroll|l&d|workforce|employee|conflict|kpi|department)\b/.test(t);
+  const hasRetention = /\b(churn|retention|feedback|user signal|latenc|delay|hops?|product.*signal|signal.*product)\b/.test(t);
+  const hasServices = /\b(microservice|service|api\b|database|db\b|connection|dependency|cascade|inbound|hub)\b/.test(t);
+  const hasScaling = /\b(scal(e|ing)|growth|distribut|expand|headcount|team size)\b/.test(t);
+
+  if (hasHierarchy) {
+    return {
+      vector: { F: 0.73, C: 0.41, A: 0.29, R: 0.61 },
+      match: "Centralized neural ganglion — high hub dependency",
+      matchDetail: "Neural network",
+      score: 87,
+      recommendation: "Neural pruning: distribute authority across autonomous conduction pathways",
+      caseId: "saas",
+    };
+  }
+  if (hasSilos) {
+    return {
+      vector: { F: 0.44, C: 0.68, A: 0.31, R: 0.55 },
+      match: "Compartmentalized lymphoid system — no shared signal memory",
+      matchDetail: "Immune system",
+      score: 83,
+      recommendation: "Immune memory model: shared signal registry with cross-team adaptive response",
+      caseId: "hr",
+    };
+  }
+  if (hasRetention) {
+    return {
+      vector: { F: 0.58, C: 0.29, A: 0.22, R: 0.70 },
+      match: "Uncoupled receptor-effector pathway — signal latency > 3 cycles",
+      matchDetail: "Metabolic system",
+      score: 91,
+      recommendation: "Allosteric receptor model: direct user signal to product nucleus within one cycle",
+      caseId: "product",
+    };
+  }
+  if (hasServices) {
+    return {
+      vector: { F: 0.81, C: 0.35, A: 0.24, R: 0.48 },
+      match: "Hypervascularized hub — critical node with excessive tributary load",
+      matchDetail: "Vascular system",
+      score: 79,
+      recommendation: "Distributive vascular model: decouple hub via parallel routing pathways",
+      caseId: "saas",
+    };
+  }
+  if (hasScaling) {
+    return {
+      vector: { F: 0.62, C: 0.55, A: 0.38, R: 0.57 },
+      match: "Undifferentiated growth — morphogenic gradient absent",
+      matchDetail: "Morphogenesis",
+      score: 74,
+      recommendation: "Morphogenic field model: gradient signals to guide differentiated scaling",
+      caseId: "saas",
+    };
+  }
+
+  return {
+    vector: { F: 0.66, C: 0.44, A: 0.31, R: 0.58 },
+    match: "Generic coordination topology — disambiguation required",
+    matchDetail: "Colony organism",
+    score: 68,
+    recommendation: "Stigmergic model: redistribute coordination through local interaction rules",
+    caseId: "saas",
+  };
+}
 
 export function SystemUploadSection() {
   const [activeType, setActiveType] = useState(0);
   const [input, setInput] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [result, setResult] = useState<null | {
-    vector: string;
-    match: string;
-    score: number;
-  }>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   function handleAnalyze() {
@@ -48,19 +120,12 @@ export function SystemUploadSection() {
     setResult(null);
     setTimeout(() => {
       setAnalyzing(false);
-      setResult({
-        vector: "S = (F:0.73, C:0.41, A:0.29, R:0.61)",
-        match: "Centralized neural ganglion — high hub dependency",
-        score: 87,
-      });
+      setResult(analyzeInput(input));
     }, 2400);
   }
 
   return (
-    <section
-      id="upload"
-      className="py-32 px-6"
-    >
+    <section id="upload" className="py-32 px-6">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-14">
           <span
@@ -83,7 +148,8 @@ export function SystemUploadSection() {
             style={{ color: "var(--text-secondary)" }}
           >
             The engine parses structure, extracts the flow graph G(V,E), computes
-            the state vector S, and retrieves the closest biological analogue.
+            the state vector S = (F, C, A, R), and retrieves the closest biological
+            analogue from the pattern library.
           </p>
         </div>
 
@@ -107,14 +173,9 @@ export function SystemUploadSection() {
                   onClick={() => setActiveType(i)}
                   className="flex items-center gap-2 px-5 py-3.5 text-xs font-medium transition-all border-b-2 -mb-px"
                   style={{
-                    color:
-                      activeType === i
-                        ? "var(--primary)"
-                        : "var(--text-secondary)",
-                    borderColor:
-                      activeType === i ? "var(--primary)" : "transparent",
-                    background:
-                      activeType === i ? "rgba(39,245,163,0.04)" : "transparent",
+                    color: activeType === i ? "var(--primary)" : "var(--text-secondary)",
+                    borderColor: activeType === i ? "var(--primary)" : "transparent",
+                    background: activeType === i ? "rgba(39,245,163,0.04)" : "transparent",
                   }}
                 >
                   <Icon size={13} />
@@ -135,9 +196,7 @@ export function SystemUploadSection() {
               className="w-full resize-none rounded-lg px-4 py-3 text-sm leading-relaxed outline-none transition-all border"
               style={{
                 background: "rgba(10,13,18,0.7)",
-                borderColor: input
-                  ? "rgba(39,245,163,0.3)"
-                  : "rgba(255,255,255,0.07)",
+                borderColor: input ? "rgba(39,245,163,0.3)" : "rgba(255,255,255,0.07)",
                 color: "var(--text-primary)",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "0.82rem",
@@ -146,10 +205,7 @@ export function SystemUploadSection() {
 
             {/* Example prompts */}
             <div className="mt-3 flex flex-wrap gap-2">
-              <span
-                className="text-xs"
-                style={{ color: "var(--text-secondary)" }}
-              >
+              <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
                 Try an example:
               </span>
               {exampleInputs.map((ex, i) => (
@@ -194,73 +250,178 @@ export function SystemUploadSection() {
             </div>
           </div>
 
-          {/* Result */}
+          {/* Result panel */}
           {(analyzing || result) && (
             <div
-              className="mx-6 mb-6 rounded-lg border p-5"
+              className="mx-6 mb-6 rounded-lg border"
               style={{
                 background: "rgba(10,13,18,0.6)",
                 borderColor: "rgba(39,245,163,0.2)",
               }}
             >
               {analyzing ? (
-                <div className="flex flex-col gap-3">
+                <div className="p-5 flex flex-col gap-3">
                   <LoadingBar label="Parsing graph G(V,E)" delay={0} />
                   <LoadingBar label="Computing state vector S" delay={400} />
                   <LoadingBar label="Retrieving biological analogues" delay={900} />
-                  <LoadingBar label="Scoring candidates B = {b1...bn}" delay={1500} />
+                  <LoadingBar label="Scoring candidates B = {b₁…bₙ}" delay={1500} />
                 </div>
               ) : result ? (
-                <div className="grid sm:grid-cols-3 gap-5">
-                  <div>
-                    <div
-                      className="font-mono-bio text-xs mb-1"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      STATE VECTOR
-                    </div>
-                    <div
-                      className="font-mono-bio text-sm"
-                      style={{ color: "var(--primary)" }}
-                    >
-                      {result.vector}
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      className="font-mono-bio text-xs mb-1"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      BIOLOGICAL MATCH
-                    </div>
-                    <div
-                      className="text-sm font-medium"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {result.match}
-                    </div>
-                  </div>
-                  <div>
-                    <div
-                      className="font-mono-bio text-xs mb-1"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      SIMILARITY SCORE
-                    </div>
-                    <div
-                      className="font-semibold text-2xl"
-                      style={{ color: "var(--primary)" }}
-                    >
-                      {result.score}%
-                    </div>
-                  </div>
-                </div>
+                <ResultPanel result={result} />
               ) : null}
             </div>
           )}
         </div>
       </div>
     </section>
+  );
+}
+
+function ResultPanel({ result }: { result: AnalysisResult }) {
+  const vectorEntries: [string, number][] = [
+    ["F", result.vector.F],
+    ["C", result.vector.C],
+    ["A", result.vector.A],
+    ["R", result.vector.R],
+  ];
+
+  return (
+    <div className="p-5 flex flex-col gap-6">
+      {/* Top row: vector + match + score */}
+      <div className="grid sm:grid-cols-3 gap-6">
+        {/* State vector */}
+        <div>
+          <div
+            className="font-mono-bio text-xs mb-3"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            STATE VECTOR
+          </div>
+          <div className="flex flex-col gap-2">
+            {vectorEntries.map(([key, val]) => (
+              <div key={key} className="flex items-center gap-2">
+                <span
+                  className="font-mono-bio text-xs w-4"
+                  style={{ color: "var(--primary)" }}
+                >
+                  {key}
+                </span>
+                <div
+                  className="flex-1 h-1 rounded-full overflow-hidden"
+                  style={{ background: "rgba(39,245,163,0.1)" }}
+                >
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${val * 100}%`,
+                      background: "var(--primary)",
+                      transition: "width 0.8s ease-out",
+                    }}
+                  />
+                </div>
+                <span
+                  className="font-mono-bio text-xs w-8 text-right"
+                  style={{ color: "var(--primary)" }}
+                >
+                  {val.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Biological match */}
+        <div>
+          <div
+            className="font-mono-bio text-xs mb-3"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            BIOLOGICAL MATCH
+          </div>
+          <div
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs mb-3"
+            style={{
+              borderColor: "rgba(39,245,163,0.3)",
+              background: "rgba(39,245,163,0.07)",
+              color: "var(--primary)",
+            }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: "var(--primary)" }}
+            />
+            <span className="font-mono-bio">{result.matchDetail}</span>
+          </div>
+          <div
+            className="text-sm font-medium leading-snug"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {result.match}
+          </div>
+        </div>
+
+        {/* Score */}
+        <div>
+          <div
+            className="font-mono-bio text-xs mb-3"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            SIMILARITY SCORE
+          </div>
+          <div
+            className="font-semibold leading-none mb-2"
+            style={{ fontSize: "2.6rem", color: "var(--primary)" }}
+          >
+            {result.score}
+            <span className="text-2xl">%</span>
+          </div>
+          {/* Score bar */}
+          <div
+            className="h-1 rounded-full overflow-hidden"
+            style={{ background: "rgba(39,245,163,0.1)" }}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${result.score}%`,
+                background: "linear-gradient(90deg, var(--primary), var(--secondary))",
+                transition: "width 1s ease-out",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Recommendation + CTA */}
+      <div
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t"
+        style={{ borderColor: "rgba(39,245,163,0.1)" }}
+      >
+        <div className="flex flex-col gap-1">
+          <span
+            className="font-mono-bio text-xs uppercase tracking-wider"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Recommendation
+          </span>
+          <p className="text-sm" style={{ color: "var(--text-primary)" }}>
+            {result.recommendation}
+          </p>
+        </div>
+        <a
+          href="#transformation"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 border transition-all"
+          style={{
+            borderColor: "rgba(39,245,163,0.3)",
+            color: "var(--primary)",
+            background: "rgba(39,245,163,0.06)",
+          }}
+        >
+          View transformation
+          <ArrowRight size={13} />
+        </a>
+      </div>
+    </div>
   );
 }
 

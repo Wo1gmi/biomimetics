@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useReveal } from "../hooks/useReveal";
 
 const problems = [
   {
@@ -30,10 +31,11 @@ const problems = [
 ];
 
 export function ProblemSection() {
+  const ref = useReveal();
   return (
     <section id="problem" className="py-32 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-16">
+      <div className="max-w-6xl mx-auto" ref={ref}>
+        <div className="mb-16 reveal">
           <span
             className="font-mono-bio text-xs tracking-[0.2em] uppercase"
             style={{ color: "var(--primary)" }}
@@ -54,11 +56,15 @@ export function ProblemSection() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-20">
           {problems.map((p, i) => (
-            <ProblemCard key={i} {...p} index={i} />
+            <div key={i} className={`reveal reveal-delay-${i + 1}`}>
+              <ProblemCard {...p} index={i} />
+            </div>
           ))}
         </div>
 
-        <EntropyVisualizer />
+        <div className="reveal reveal-delay-2">
+          <EntropyVisualizer />
+        </div>
       </div>
     </section>
   );

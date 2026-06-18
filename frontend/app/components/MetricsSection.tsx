@@ -1,5 +1,7 @@
 "use client";
 
+import { useReveal } from "../hooks/useReveal";
+
 const metrics = [
   {
     id: "sci",
@@ -37,14 +39,15 @@ const metrics = [
 ];
 
 export function MetricsSection() {
+  const ref = useReveal();
   return (
     <section
       id="metrics"
       className="py-32 px-6"
       style={{ background: "var(--surface)" }}
     >
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-16 max-w-2xl">
+      <div className="max-w-6xl mx-auto" ref={ref}>
+        <div className="mb-16 max-w-2xl reveal">
           <span
             className="font-mono-bio text-xs tracking-[0.2em] uppercase"
             style={{ color: "var(--primary)" }}
@@ -73,8 +76,10 @@ export function MetricsSection() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {metrics.map((m) => (
-            <MetricCard key={m.id} {...m} />
+          {metrics.map((m, i) => (
+            <div key={m.id} className={`reveal reveal-delay-${i + 1}`}>
+              <MetricCard {...m} />
+            </div>
           ))}
         </div>
 
